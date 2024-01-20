@@ -4,11 +4,11 @@
 #include <functional>
 
 struct Node {
-    std::string sub = "";   // a substring of the input string
-    std::vector<int> ch;    // vector of child nodes
+    std::string sub = "";   
+    std::vector<int> ch;    
 
     Node() {
-        // empty
+        
     }
 
     Node(const std::string& sub, std::initializer_list<int> children) : sub(sub) {
@@ -67,7 +67,7 @@ private:
             while (true) {
                 auto children = nodes[n].ch;
                 if (x2 == children.size()) {
-                    // no matching child, remainder of suf becomes new node
+                    
                     n2 = nodes.size();
                     nodes.push_back(Node(suf.substr(i), {}));
                     nodes[n].ch.push_back(n2);
@@ -79,24 +79,24 @@ private:
                 }
                 x2++;
             }
-            // find prefix of remaining suffix in common with child
+           
             auto sub2 = nodes[n2].sub;
             size_t j = 0;
             while (j < sub2.size()) {
                 if (suf[i + j] != sub2[j]) {
                     // split n2
                     auto n3 = n2;
-                    // new node for the part in common
+                  
                     n2 = nodes.size();
                     nodes.push_back(Node(sub2.substr(0, j), { n3 }));
-                    nodes[n3].sub = sub2.substr(j); // old node loses the part in common
+                    nodes[n3].sub = sub2.substr(j); 
                     nodes[n].ch[x2] = n2;
-                    break; // continue down the tree
+                    break; 
                 }
                 j++;
             }
-            i += j; // advance past part in common
-            n = n2; // continue down the tree
+            i += j; 
+            n = n2; 
         }
     }
 };
