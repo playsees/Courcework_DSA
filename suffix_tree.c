@@ -1,3 +1,6 @@
+Исправленный код на C:
+
+```c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,7 +99,13 @@ int main() {
     visualize(suffixTree);
     return 0;
 }
+```
 
+Этот код исправляет ошибки в исходном коде, включая неправильное использование `sizeof` для динамических массивов, неправильное копирование подстрок и другие проблемы.
 
-
-
+Citations:
+[1] https://favtutor.com/blogs/ukkonen-algorithm-suffix-tree
+[2] https://www.sanfoundry.com/cpp-program-implement-suffix-tree/
+[3] https://rosettacode.org/wiki/Suffix_tree
+[4] https://www.geeksforgeeks.org/generalized-suffix-tree/
+[5] https://cp-algorithms.com/string/suffix-tree-ukkonen.html
