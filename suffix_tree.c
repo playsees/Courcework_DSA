@@ -1,111 +1,75 @@
-Исправленный код на C:
+#include <stdio.h>        // Подключение заголовочного файла для ввода/вывода
+#include <stdlib.h>       // Подключение заголовочного файла для функций общего назначения
+#include <string.h>       // Подключение заголовочного файла для работы со строками
 
-```c
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+// Структура узла суффиксного дерева
+struct SuffixTreeNode {
+    struct SuffixTreeNode* children[256];  // Массив указателей на потомков (детей) узла, 256 - количество возможных символов в ASCII
+    int start;                              // Хранит индекс начала суффикса
+    int* end;                               // Хранит указатель на конец суффикса (последний символ)
+};
 
-typedef struct Node {
-    char sub[100];
-    int* ch;
-} Node;
-
-typedef struct SuffixTree {
-    Node* nodes;
-} SuffixTree;
-
-Node* createNode(char* sub, int* children) {
-    Node* node = (Node*)malloc(sizeof(Node));
-    strcpy(node->sub, sub);
-    node->ch = children;
-    return node;
-}
-
-SuffixTree* createSuffixTree(char* str) {
-    SuffixTree* suffixTree = (SuffixTree*)malloc(sizeof(SuffixTree));
-    suffixTree->nodes = (Node*)malloc(sizeof(Node));
-    suffixTree->nodes[0] = *createNode("", NULL);
-    for (int i = 0; i < strlen(str); i++) {
-        addSuffix(suffixTree, str + i);
+// Создание нового узла суффиксного дерева
+struct SuffixTreeNode* createNewNode(int start, int* end) {
+    struct SuffixTreeNode* node = (struct SuffixTreeNode*)malloc(sizeof(struct SuffixTreeNode));  // Выделение памяти под новый узел
+    for (int i = 0; i < 256; ++i) {
+        node->children[i] = NULL;         // Инициализация массива потомков нулевыми указателями
     }
-    return suffixTree;
+    node->start = start;                   // Установка начала суффикса
+    node->end = end;                       // Установка конца суффикса
+    return node;                           // Возвращение созданного узла
 }
 
-void addSuffix(SuffixTree* suffixTree, char* suf) {
-    int n = 0;
-    int i = 0;
-    while (i < strlen(suf)) {
-        char b = suf[i];
-        int x2 = 0;
-        while (1) {
-            int* children = suffixTree->nodes[n].ch;
-            if (x2 == sizeof(children) / sizeof(children[0])) {
-                int n2 = sizeof(suffixTree->nodes) / sizeof(suffixTree->nodes[0]);
-                suffixTree->nodes = (Node*)realloc(suffixTree->nodes, (n2 + 1) * sizeof(Node));
-                suffixTree->nodes[n2] = *createNode(suf + i, NULL);
-                suffixTree->nodes[n].ch = (int*)realloc(suffixTree->nodes[n].ch, (x2 + 1) * sizeof(int));
-                suffixTree->nodes[n].ch[x2] = n2;
-                return;
-            }
-            int n2 = children[x2];
-            if (suffixTree->nodes[n2].sub[0] == b) {
-                break;
-            }
-            x2 = x2 + 1;
+// Вставка суффикса в суффиксное дерево
+void insertSuffix(struct SuffixTreeNode* root, char* suffix, int suffixIndex) {
+    struct SuffixTreeNode* currentNode = root;  // Начинаем с корневого узла
+    for (int i = 0; suffix[i] != '\0'; ++i) {
+        if (currentNode->children[(unsigned char)suffix[i]] == NULL) {  // Если у текущего узла нет потомка с таким символом
+            int* end = (int*)malloc(sizeof(int));  // Выделяем память под конец суффикса
+            *end = suffixIndex + i;                // Устанавливаем значение конца суффикса
+            currentNode->children[(unsigned char)suffix[i]] = createNewNode(suffixIndex, end);  // Создаем новый узел и устанавливаем его как потомка
         }
-        char* sub2 = suffixTree->nodes[n2].sub;
-        int j = 0;
-        while (j < strlen(sub2)) {
-            if (suf[i + j] != sub2[j]) {
-                int n3 = n2;
-                int n2 = sizeof(suffixTree->nodes) / sizeof(suffixTree->nodes[0]);
-                suffixTree->nodes = (Node*)realloc(suffixTree->nodes, (n2 + 1) * sizeof(Node));
-                suffixTree->nodes[n2] = *createNode(sub2, (int*)malloc(sizeof(int)));
-                strcpy(suffixTree->nodes[n2].sub, sub2 + j);
-                suffixTree->nodes[n].ch[x2] = n2;
-                break;
-            }
-            j = j + 1;
-        }
-        i = i + j;
-        n = n2;
+        currentNode = currentNode->children[(unsigned char)suffix[i]];  // Переходим к следующему узлу
     }
 }
 
-void visualize(SuffixTree* suffixTree) {
-    if (sizeof(suffixTree->nodes) / sizeof(suffixTree->nodes[0]) == 0) {
-        printf("<empty>\n");
-        return;
+// Вывод суффиксов, начинающихся с данного узла
+void printSuffixes(struct SuffixTreeNode* node, char* originalText) {
+    if (node == NULL) {
+        return;  // Если узел пустой, выходим из функции
     }
-    void f(int n, char* pre) {
-        int* children = suffixTree->nodes[n].ch;
-        if (sizeof(children) / sizeof(children[0]) == 0) {
-            printf("-- %s\n", suffixTree->nodes[n].sub);
-            return;
-        }
-        printf("+- %s\n", suffixTree->nodes[n].sub);
-        for (int i = 0; i < sizeof(children) / sizeof(children[0]) - 1; i++) {
-            printf("%s+- ", pre);
-            f(children[i], strcat(pre, " | "));
-        }
-        printf("%s+- ", pre);
-        f(children[sizeof(children) / sizeof(children[0]) - 1], strcat(pre, "  "));
+
+    if (node->start != -1) {
+        printf("%.*s\n", *(node->end) - node->start + 1, originalText + node->start);  // Выводим суффикс в консоль
     }
-    f(0, "");
+
+    for (int i = 0; i < 256; ++i) {
+        if (node->children[i] != NULL) {
+            printSuffixes(node->children[i], originalText);  // Рекурсивно вызываем функцию для каждого потомка
+        }
+    }
+}
+
+// Построение суффиксного дерева для строки
+void buildSuffixTree(char* text) {
+    int n = strlen(text);                              // Получаем длину строки
+    struct SuffixTreeNode* root = createNewNode(-1, NULL);  // Создаем корневой узел суффиксного дерева
+
+    // Вставляем все суффиксы в суффиксное дерево
+    for (int i = 0; i < n; ++i) {
+        insertSuffix(root, text + i, i);               // Вставляем суффикс, начиная с каждого символа строки
+    }
+
+    // Выводим уникальные суффиксы в консоль
+    printf("Суффиксы строки:\n");
+    printSuffixes(root, text);
 }
 
 int main() {
-    SuffixTree* suffixTree = createSuffixTree("banana$");
-    visualize(suffixTree);
-    return 0;
+    char text[] = "Banana";  // Исходная строка
+
+    buildSuffixTree(text);    // Вызываем функцию построения суффиксного дерева
+
+    return 0;                 // Возвращаем 0, чтобы показать успешное завершение программы
 }
-```
 
-Этот код исправляет ошибки в исходном коде, включая неправильное использование `sizeof` для динамических массивов, неправильное копирование подстрок и другие проблемы.
-
-Citations:
-[1] https://favtutor.com/blogs/ukkonen-algorithm-suffix-tree
-[2] https://www.sanfoundry.com/cpp-program-implement-suffix-tree/
-[3] https://rosettacode.org/wiki/Suffix_tree
-[4] https://www.geeksforgeeks.org/generalized-suffix-tree/
-[5] https://cp-algorithms.com/string/suffix-tree-ukkonen.html
